@@ -9,6 +9,7 @@ from bookmarks.views import assets as assets_views
 from bookmarks.views import auth as linkding_auth_views
 from bookmarks.views import bookmarks as bookmarks_views
 from bookmarks.views import bundles as bundles_views
+from bookmarks.views import hn as hn_views
 from bookmarks.views import settings as settings_views
 from bookmarks.views import tags as tags_views
 from bookmarks.views import toasts as toasts_views
@@ -40,6 +41,13 @@ urlpatterns = [
     ),
     path("bookmarks/new", bookmarks_views.new, name="bookmarks.new"),
     path("bookmarks/close", bookmarks_views.close, name="bookmarks.close"),
+    # HN-style page
+    path("bookmarks/hn", hn_views.index, name="bookmarks.hn"),
+    path(
+        "bookmarks/hn/<int:bookmark_id>/vote",
+        hn_views.vote,
+        name="bookmarks.hn.vote",
+    ),
     path(
         "bookmarks/<int:bookmark_id>/edit", bookmarks_views.edit, name="bookmarks.edit"
     ),

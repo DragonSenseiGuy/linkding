@@ -458,6 +458,7 @@ class UserProfile(models.Model):
     collapse_side_panel = models.BooleanField(default=False, null=False)
     hide_bundles = models.BooleanField(default=False, null=False)
     legacy_search = models.BooleanField(default=False, null=False)
+    hn_tag_name = models.CharField(max_length=64, blank=True, default="")
 
     def save(self, *args, **kwargs):
         if self.custom_css:
@@ -478,6 +479,25 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+class BookmarkVote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    bookmark = models.ForeignKey(
+        Bookmark, on_delete=models.CASCADE, related_name="votes"
+    )
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "bookmark"],
+                name="unique_bookmark_vote",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.bookmark}"
 
 
 class Toast(models.Model):

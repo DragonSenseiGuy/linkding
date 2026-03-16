@@ -1,0 +1,84 @@
+{% extends "shared/layout.html" %}
+{% load static shared pagination %}
+{% block head %}
+  {% with page_title="Hacker News - Linkding" %}{{ block.super }}{% endwith %}
+{% endblock %}
+{% block content %}
+  <main class="hn-page" aria-labelledby="main-heading">
+    <div class="section-header">
+      <h1 id="main-heading">Hacker News</h1>
+      <div class="header-controls">
+        <nav class="hn-period-tabs" aria-label="Time period">
+          {% for value, label in period_labels %}
+            <a href="?period={{ value }}"
+               class="btn btn-link{% if current_period == value %} active{% endif %}">{{ label }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+    </div>
+    {% if no_tag_configured %}
+      <div class="empty-state">
+        <p>No HN tag configured.</p>
+        <p>
+          Go to <a href="{% url 'linkding:settings.general' %}">Settings</a> and set a
+          <strong>Hacker News tag</strong> to get started.
+        </p>
+      </div>
+    {% elif is_empty %}
+      <div class="empty-state">
+        <p>
+          No bookmarks tagged <strong>#{{ tag_name }}</strong> found
+          for this time period.
+        </p>
+        {% if fell_back %}
+          <p class="text-secondary">Showing results for <strong>week</strong> because day had no results.</p>
+        {% endif %}
+      </div>
+    {% else %}
+      {% if fell_back %}
+        <p class="text-secondary mb-2">
+          Showing results for <strong>week</strong> because day had no results.
+        </p>
+      {% endif %}
+      <ol class="hn-list" start="{{ items.start_index }}">
+        {% for item in items %}
+          <li>
+            <div class="hn-item">
+              <div class="hn-vote">
+                {% if item.has_voted %}
+                  <span class="hn-vote-btn voted" title="Already voted">▲</span>
+                {% else %}
+                  <form method="post"
+                        action="{% url 'linkding:bookmarks.hn.vote' item.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="return_url" value="{{ request.get_full_path }}">
+                    <button type="submit" class="hn-vote-btn" title="Upvote">▲</button>
+                  </form>
+                {% endif %}
+                <span class="hn-vote-count">{{ item.vote_count }}</span>
+              </div>
+              <div class="hn-content">
+                <div class="hn-title">
+                  <a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.resolved_title }}</a>
+                  <span class="hn-domain">({{ item.url|truncatechars:50 }})</span>
+                </div>
+                <div class="hn-meta">
+                  <span>by {{ item.owner.username }}</span>
+                  <span>{{ item.date_added|humanize_relative_date }}</span>
+                  {% if item.tag_names %}
+                    <span class="hn-tags">
+                      {% for tag in item.tag_names %}#{{ tag }}{% if not forloop.last %} {% endif %}{% endfor %}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+      <div class="bookmark-pagination{% if request.user_profile.sticky_pagination %} sticky{% endif %}">
+        {% pagination items %}
+      </div>
+    {% endif %}
+  </main>
+{% endblock %}

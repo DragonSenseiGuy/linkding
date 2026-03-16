@@ -335,6 +335,7 @@ class UserProfileForm(forms.ModelForm):
             "collapse_side_panel",
             "hide_bundles",
             "legacy_search",
+            "hn_tag_name",
         ]
         widgets = {
             "theme": FormSelect,
@@ -365,6 +366,7 @@ class UserProfileForm(forms.ModelForm):
             "enable_automatic_html_snapshots": FormCheckbox,
             "default_mark_unread": FormCheckbox,
             "default_mark_shared": FormCheckbox,
+            "hn_tag_name": FormInput,
         }
 
 

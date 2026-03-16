@@ -1,0 +1,120 @@
+/* Hacker News style page */
+.hn-page {
+  max-width: 800px;
+}
+
+.hn-page .empty-state {
+  margin-top: var(--unit-6);
+  color: var(--secondary-text-color);
+}
+
+/* Period tabs */
+.hn-period-tabs {
+  display: flex;
+  gap: var(--unit-1);
+  margin-left: auto;
+}
+
+.hn-period-tabs .btn.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* HN list */
+ol.hn-list {
+  list-style: none;
+  margin: var(--unit-4) 0 0 0;
+  padding: 0;
+  counter-reset: hn-counter;
+}
+
+ol.hn-list > li {
+  counter-increment: hn-counter;
+  margin-bottom: var(--unit-3);
+  position: relative;
+  padding-left: var(--unit-8);
+}
+
+ol.hn-list > li::before {
+  content: counter(hn-counter) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--secondary-text-color);
+  font-size: var(--font-size-sm);
+  min-width: var(--unit-6);
+  text-align: right;
+}
+
+/* HN item layout */
+.hn-item {
+  display: flex;
+  gap: var(--unit-2);
+}
+
+.hn-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: var(--unit-8);
+  flex-shrink: 0;
+}
+
+.hn-vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--secondary-text-color);
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+.hn-vote-btn:hover {
+  color: var(--primary-color);
+}
+
+.hn-vote-btn.voted {
+  color: var(--primary-color);
+  cursor: default;
+}
+
+.hn-vote-count {
+  font-size: var(--font-size-sm);
+  color: var(--secondary-text-color);
+  font-weight: 500;
+}
+
+.hn-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hn-title a {
+  color: var(--primary-text-color);
+  font-weight: 500;
+}
+
+.hn-title a:visited {
+  color: var(--secondary-text-color);
+}
+
+.hn-domain {
+  font-size: var(--font-size-sm);
+  color: var(--secondary-text-color);
+  margin-left: var(--unit-1);
+  word-break: break-all;
+}
+
+.hn-meta {
+  font-size: var(--font-size-sm);
+  color: var(--secondary-text-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-2);
+  margin-top: var(--unit-h);
+}
+
+.hn-tags {
+  color: var(--alternative-color);
+}
