@@ -482,7 +482,8 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 class BookmarkVote(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_key = models.CharField(max_length=40, blank=True, default="")
     bookmark = models.ForeignKey(
         Bookmark, on_delete=models.CASCADE, related_name="votes"
     )
@@ -492,12 +493,20 @@ class BookmarkVote(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "bookmark"],
+                condition=models.Q(user__isnull=False),
                 name="unique_bookmark_vote",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["session_key", "bookmark"],
+                condition=models.Q(session_key__gt=""),
+                name="unique_bookmark_vote_session",
+            ),
         ]
 
     def __str__(self):
-        return f"{self.user.username} -> {self.bookmark}"
+        if self.user:
+            return f"{self.user.username} -> {self.bookmark}"
+        return f"session:{self.session_key[:8]} -> {self.bookmark}"
 
 
 class Toast(models.Model):

@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Exists, OuterRef
 from django.http import HttpResponseRedirect
@@ -26,28 +25,36 @@ PERIOD_LABELS = [
 ]
 
 
-def _get_hn_queryset(user, tag_name, period):
+def _get_hn_queryset(request, tag_name, period):
     cutoff = timezone.now() - PERIODS[period]
-    user_vote_qs = BookmarkVote.objects.filter(
-        bookmark=OuterRef("pk"), user=user
+
+    qs = Bookmark.objects.filter(
+        tags__name__iexact=tag_name,
+        date_added__gte=cutoff,
+    )
+
+    if request.user.is_authenticated:
+        voted_qs = BookmarkVote.objects.filter(
+            bookmark=OuterRef("pk"), user=request.user
+        )
+    else:
+        session_key = request.session.session_key or ""
+        voted_qs = BookmarkVote.objects.filter(
+            bookmark=OuterRef("pk"), session_key=session_key
+        )
+
+    qs = qs.annotate(
+        vote_count=Count("votes", distinct=True),
+        has_voted=Exists(voted_qs),
     )
 
     return (
-        Bookmark.objects.filter(
-            tags__name__iexact=tag_name,
-            date_added__gte=cutoff,
-        )
-        .annotate(
-            vote_count=Count("votes", distinct=True),
-            has_voted=Exists(user_vote_qs),
-        )
-        .select_related("owner")
+        qs.select_related("owner")
         .prefetch_related("tags")
         .order_by("-vote_count", "-date_added")
     )
 
 
-@login_required
 def index(request: HttpRequest):
     tag_name = request.user_profile.hn_tag_name
 
@@ -68,13 +75,13 @@ def index(request: HttpRequest):
     if period not in PERIODS:
         period = "day"
 
-    queryset = _get_hn_queryset(request.user, tag_name, period)
+    queryset = _get_hn_queryset(request, tag_name, period)
 
     # Fallback: if no explicit period was set and day is empty, try week
     fell_back = False
     if not explicit_period and period == "day" and not queryset.exists():
         period = "week"
-        queryset = _get_hn_queryset(request.user, tag_name, period)
+        queryset = _get_hn_queryset(request, tag_name, period)
         fell_back = True
 
     page_number = request.GET.get("page")
@@ -98,7 +105,6 @@ def index(request: HttpRequest):
     )
 
 
-@login_required
 def vote(request: HttpRequest, bookmark_id: int):
     if request.method != "POST":
         return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
@@ -108,7 +114,14 @@ def vote(request: HttpRequest, bookmark_id: int):
     except Bookmark.DoesNotExist:
         return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
-    BookmarkVote.objects.get_or_create(user=request.user, bookmark=bookmark)
+    if request.user.is_authenticated:
+        BookmarkVote.objects.get_or_create(user=request.user, bookmark=bookmark)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        BookmarkVote.objects.get_or_create(
+            session_key=request.session.session_key, bookmark=bookmark
+        )
 
     return_url = get_safe_return_url(
         request.POST.get("return_url"), "/bookmarks/hn"
